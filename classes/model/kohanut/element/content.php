@@ -1,7 +1,7 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Content Elemenent. Can render markdown and/or twig.
- * Modified for Jelly Modelling system
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
@@ -9,13 +9,13 @@
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Kohanut_Element_Content extends Kohanut_Element
+class Model_Kohanut_Element_Content extends Kohanut_Element
 {
-	protected $_table = 'kohanut_element_content';
 
 	public static function initialize(Jelly_Meta $meta)
 	{
-		$meta->fields(array(
+		$meta->table('kohanut_element_content')
+            ->fields(array(
 			'id' => new Field_Primary,
 			
 			'code' => new Field_Text,
@@ -134,8 +134,7 @@ class Kohanut_Element_Content extends Kohanut_Element
             $values = array($values => $value);
         }
         
-        if ($this->loaded())
-        {
+        if ($this->loaded()){
             $new = array(
                 'twig'  => 0,
                 'markdown' => 0,

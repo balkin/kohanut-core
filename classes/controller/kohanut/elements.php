@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * This is the Elements controller, it's responsible for moving, editing and adding elements, using the drivers.
- *
+ * Modified for Jelly modelling system                                                       
+ * 
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -31,13 +33,19 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Load the block and ensure it exists
-		$block = Sprig::factory('kohanut_block',array('id'=>$id))->load();
+		$block = Jelly::select('kohanut_block', $id);
+            
 		if ( ! $block->loaded())
 			return $this->admin_error(__('Couldn\'t find block ID :id.',array(':id'=>$id)));
-			
-		// Find a block on the same page and area, with a lower order.
-		$query = DB::select()->where('order','<',$block->order)->order_by('order','DESC');
-		$other = Sprig::factory('kohanut_block',array('area'=>$block->area,'page'=>$block->page))->load($query);
+		
+        // Find a block on the same page and area, with a lower order.
+		$other = Jelly::select('kohanut_block')
+            ->where('order','<', $block->order)
+            ->where('area', '=', $block->area)
+            ->where('page', '=', $block->page->id)
+            ->order_by('order','DESC')
+            ->limit(1)
+            ->execute();
 		
 		// If other isn't loaded it means there wasn't an element above this one
 		if ($other->loaded())
@@ -47,8 +55,8 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 			$block->order = $other->order;
 			$other->order = $temp;
 			
-			$block->update();
-			$other->update();
+			$block->save();
+			$other->save();
 		}
 		
 		// Redirect back to edit page
@@ -67,13 +75,19 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Load the block and ensure it exists
-		$block = Sprig::factory('kohanut_block',array('id'=>$id))->load();
+		$block = Jelly::select('kohanut_block', $id);
+            
 		if ( ! $block->loaded())
 			return $this->admin_error(__('Couldn\'t find block ID :id.',array(':id'=>$id)));
 			
 		// Find a block on the same page and area, with a lower order.
-		$query = DB::select()->where('order','>',$block->order)->order_by('order','ASC');
-		$other = Sprig::factory('kohanut_block',array('area'=>$block->area,'page'=>$block->page))->load($query);
+		$other = Jelly::select('kohanut_block')
+            ->where('order','>',$block->order)
+            ->where('area', '=', $block->area)
+            ->where('page', '=', $block->page->id)
+            ->order_by('order','ASC')
+            ->limit(1)
+            ->execute();
 		
 		// If other isn't loaded it means there wasn't an element above this one
 		if ($other->loaded())
@@ -83,8 +97,8 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 			$block->order = $other->order;
 			$other->order = $temp;
 			
-			$block->update();
-			$other->update();
+			$block->save();
+			$other->save();
 		}
 		
 		// Redirect back to edit page
@@ -111,12 +125,14 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 		$page = (int) $page;
 		$area = (int) $area;
 		
-		$type = Sprig::factory('kohanut_elementtype',array('id'=> (int) $type ))->load();
+		$type = Jelly::select('kohanut_elementtype', $type);
 		
 		if ( ! $type->loaded())
-			return $this->admin_error(__('Elementtype :type could not be loaded.',array(':type'=> (int) $block->elementtype->id)));
+			return $this->admin_error(__('Elementtype :type could not be loaded.', array(':type'=> (int) $block->elementtype->id)));
 		
-		$class = Kohanut_Element::factory($type->name);
+        $class_name = 'Kohanut_Element_'.ucfirst($type->name);
+        
+		$class = Jelly::factory($class_name);
 		
 		$this->view->title = __('Add Element');
 		$this->view->body = $class->action_add((int) $page, (int) $area);
@@ -135,28 +151,29 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Load the block
-		$block = Sprig::factory('kohanut_block',array('id'=>$id))->load();
-		
+		$block = Jelly::select('kohanut_block', $id);
+        
 		if ( ! $block->loaded())
 			return $this->admin_error(__('Couldn\'t find block ID :id.',array(':id'=>$id)));
 			
 		// Load the type
-		$type = $block->elementtype->load();
+		$type = $block->elementtype;
 		
 		if ( ! $type->loaded())
 			return $this->admin_error(__('Elementtype :type could not be loaded.',array(':type'=> (int) $block->elementtype->id)));
 		
-		$class = Kohanut_Element::factory($type->name);
-		$class->id = (int) $block->element;
-		$class->load();
+		$class_name = 'Kohanut_Element_'.ucfirst($type->name);
+
+        $class = Jelly::select($class_name, intval($block->element));
+            
 		$class->block = $block;
-		
-		if ( ! $class->loaded())
+        
+        if ( ! $class->loaded())
 			return $this->admin_error(__(':type with ID :id could not be found.',array(':type'=>$type->name,':id'=>(int)$block->element)));
 		
 		$this->view->title = __('Editing :element',array(':element'=>__(ucfirst($type->name))));
 		$this->view->body = $class->action_edit();
-		$this->view->body->page = $block->page->id;
+        $this->view->body->page = $block->page->id;
 	}
 	
 	/**
@@ -171,21 +188,26 @@ class Controller_Kohanut_Elements extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Load the block
-		$block = Sprig::factory('kohanut_block',array('id'=>$id))->load();
+		$block = Jelly::select('kohanut_block', $id);
 		
 		if ( ! $block->loaded())
 			return $this->admin_error(__('Couldn\'t find block ID :id.',array(':id'=>$id)));
 		
 		// Load the type
-		$type = $block->elementtype->load();
+		$type = $block->elementtype;
 		
 		if ( ! $type->loaded())
 			return $this->admin_error(__('Elementtype :type could not be loaded.',array(':type'=> (int) $block->elementtype->id)));
 			
-		$class = Kohanut_Element::factory($type->name);
-		$class->id = $block->element;
-		$class->block = $block;
-		$class->load();
+		$class_name = 'Kohanut_Element_'.ucfirst($type->name);
+        
+        $class = Jelly::select($class_name)
+            ->where('id', '=', $block->element)
+            //->where('block', '=', $block->id)
+            ->limit(1)
+            ->execute();
+            
+        $class->block = $block;
 		
 		if ( ! $class->loaded())
 			return $this->admin_error(__(':type with ID :id could not be found.',array(':type'=>$type->name,':id'=>(int)$block->element)));

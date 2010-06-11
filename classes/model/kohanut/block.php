@@ -1,48 +1,55 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Block Model
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Model_Kohanut_Block extends Sprig {
+class Model_Kohanut_Block extends Jelly_Model {
 
-	protected function _init()
+	public static function initialize(Jelly_Meta $meta)
 	{
 
-		$this->_fields += array(
-			'id' => new Sprig_Field_Auto,
+		$meta->fields(array(
+			'id' => new Field_Primary,
 			
-			'page' => new Sprig_Field_BelongsTo(array(
+			'page' => new Field_BelongsTo(array(
 				'model' => 'kohanut_page',
 				'column' => 'page',
+                'foreign' => 'kohanut_page.id',
 			)),
 			
-			'area' => new Sprig_Field_Integer,
+			'area' => new Field_Integer,
 			
-			'order' => new Sprig_Field_Integer,
+			'order' => new Field_Integer,
 			
-			'elementtype' => new Sprig_Field_BelongsTo(array(
+			'elementtype' => new Field_BelongsTo(array(
 				'model' => 'kohanut_elementtype',
 				'column' => 'elementtype',
+                'foreign' => 'kohanut_elementtype.id',
 			)),
 			
-			'element' => new Sprig_Field_Integer,
+			'element' => new Field_Integer,
 			
-		);
+		));
 	
 	}
 	
-	public function add($page,$area,$elementtype,$element)
+	public function create($page, $area, $elementtype, $element)
 	{
 		if ($this->loaded())
 		{
 			throw Kohanut_Exception('Cannot add a block that already exists');
 		}
 		
-		$elementtype = Sprig::factory('kohanut_elementtype',array('name'=>$elementtype))->load();
+		$elementtype = Jelly::select('kohanut_elementtype')
+            ->where('name', '=', $elementtype)
+            ->limit(1)
+            ->execute();
 		
 		if ( ! $elementtype->loaded())
 		{
@@ -50,18 +57,22 @@ class Model_Kohanut_Block extends Sprig {
 		}
 		
 		// Get the highest 'order' from elements in the same page and area
-		$query = DB::select()->order_by('order','DESC');
-		$block = Sprig::factory('kohanut_block',array('page' => (int) $page, 'area' => (int) $area))->load($query);
+		$block = Jelly::select('kohanut_block')
+            ->where('page', '=', (int) $page)
+            ->where('area', '=', (int) $area)
+            ->order_by('order','DESC')
+            ->limit(1)
+            ->execute();
 		$order = ($block->order) + 1;
 		
 		// Create the block
-		$this->values(array(
-			'page'        => $page,
-			'area'        => $area,
-			'order'       => $order,
-			'elementtype' => $elementtype->id,
-			'element'     => $element,
-		))->create();
+        $this->set(array(
+            'page'        => $page,
+            'area'        => $area,
+            'order'       => $order,
+            'elementtype' => $elementtype->id,
+            'element'     => $element,
+            ))->save();
 	}
 	
 }

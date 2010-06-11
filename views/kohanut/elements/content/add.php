@@ -12,9 +12,9 @@
 			</p>
 	
 			<p>
-				<?php echo $element->input('markdown',array('class'=>'check')) ?>
+				<?php echo $element->input('markdown', array('attributes' => array('class'=>'check'))) ?>
 				<?php echo __('Enable :Markdown',array(':Markdown'=>html::anchor('http://kohanut.com/docs/using.markdown','Markdown',array('target'=>'_blank')))) ?>
-				<?php echo $element->input('twig',array('class'=>'check')) ?>
+				<?php echo $element->input('twig', array('attributes' => array('class'=>'check'))) ?>
 				<?php echo __('Enable :Twig',array(':Twig'=>html::anchor('http://kohanut.com/docs/using.kohanut','Twig',array('target'=>'_blank')))) ?>
 			</p>
 			

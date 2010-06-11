@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Admin controller. This handles login and logout, ensures that the admin is logged in, does some auto-rendering and templating.
- *
+ * Modified for Jelly modelling system
+ * 
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -11,6 +13,9 @@ class Controller_Kohanut_Admin extends Controller {
 
 	// The user thats logged in
 	protected $user;
+    
+    // Auth object
+    protected $auth;
 	
 	// The view to render
 	protected $view;
@@ -35,31 +40,23 @@ class Controller_Kohanut_Admin extends Controller {
 		}
 		
 		// Set the default view
-		$this->view = New View('kohanut/admin');
+		$this->view = new View('kohanut/admin');
 		
 		if ($this->requires_login)
 		{
-			// Check if user is logged in
-			if ($id = Cookie::get('user'))
-			{
-				$user = Sprig::factory('kohanut_user')
-					->values(array('id'=>$id))
-					->load();
-				
-				if ($user->loaded())
-				{
-					// user is logged in
-					$this->user = $user;
-					// bind username to view so we can say hello
-					$this->view->user = $user->username;
-				}
-			}
-			
-			// If they aren't logged in, and the page requires login, redirect to login screen
-			if ( ! $this->user )
-			{
-				$this->request->redirect(Route::get('kohanut-login')->uri(array('action'=>'login')));
-			}
+			$this->auth = Auth::instance();
+            
+            if ( ! $this->auth->logged_in('login'))
+            {
+                $this->request->redirect(Route::get('kohanut-login')->uri(array('action'=>'login')));
+            }
+            
+            $this->user = $this->auth->get_user();
+            
+            if ($this->user)
+            {
+                $this->view->user = $this->user->username;    
+            }
 		}
 		
 		// Check for language change
@@ -163,7 +160,9 @@ class Controller_Kohanut_Admin extends Controller {
 	
 	public function action_login()
 	{
-		// If the user is logged in, redirect them
+		$this->auth = Auth::instance();
+        
+        // If the user is logged in, redirect them
 		if ($this->user)
 		{
 			$this->request->redirect('admin/pages');
@@ -171,51 +170,31 @@ class Controller_Kohanut_Admin extends Controller {
 		
 		// Overide default view and bind with $user and $errors
 		$this->view = View::factory('kohanut/login')
-			->bind('user', $user)
-			->bind('errors', $errors);
+			->bind('username', $username)
+            ->bind('errors', $errors);
 		
 		$this->view->title = "Login";
-		
-		// Load an empty user
-		$user = Sprig::factory('kohanut_user');
-		
-		// Load rules defined in sprig model into validation factory    
-		$post = Validate::factory($_POST)
-			->rules('username', $user->field('username')->rules)
-			->rules('password', $user->field('password')->rules);
-		
-		// Validate the post    
-		if ($_POST)
-		{
-			$user->values($post->as_array());
-			
-			if ($post->check())
-			{
-				// Load the user by username and password
-				$user->values($post->as_array())->load();
-		
-				if ($user->loaded())
-				{
-					// Store the user id
-					Cookie::set('user', $user->id);
-		
-					// Redirect to the home page
-					$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages')));
-				}
-				else
-				{
-					$post->error('username', 'invalid');
-				}
-			}
-		}
-		
-		$errors = $post->errors('kohanut',TRUE);
+        
+        if ($_POST)
+        {
+            $username = $_POST['username'];
+            $password = $_POST['password'];
+ 
+            //$remember = isset($_POST['remember']) ? TRUE : FALSE;
+            if ($this->auth->login($username, $password, FALSE))
+            {
+                $this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages')));
+            } else {
+                $errors = array('Login or password incorrect');
+            }
+        }
 	}
 	
 	public function action_logout()
 	{
-		// Delete the user cookie
-		Cookie::delete('user');
+		$this->auth = Auth::instance();
+        
+        $this->auth->logout();
 			
 		// Redirect to the login
 		$this->request->redirect(Route::get('kohanut-login')->uri(array('action'=>'login')));

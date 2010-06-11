@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Redirects Controller
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -11,7 +13,8 @@ class Controller_Kohanut_Redirects extends Controller_Kohanut_Admin {
 
 	public function action_index()
 	{
-		$redirects = Sprig::factory('kohanut_redirect')->load(NULL,FALSE);
+		$redirects = Jelly::select('kohanut_redirect')
+            ->execute();
 		
 		$this->view->title = "Redirects";
 		$this->view->body = View::factory('/kohanut/redirects/list',array('redirects'=>$redirects));
@@ -20,7 +23,7 @@ class Controller_Kohanut_Redirects extends Controller_Kohanut_Admin {
 	public function action_new()
 	{
 		
-		$redirect = Sprig::factory('kohanut_redirect');
+		$redirect = Jelly::factory('kohanut_redirect');
 		
 		$errors = false;
 		
@@ -28,8 +31,8 @@ class Controller_Kohanut_Redirects extends Controller_Kohanut_Admin {
 		{
 			try
 			{
-				$redirect->values($_POST);
-				$redirect->create();
+				$redirect->set($_POST);
+				$redirect->save();
 				
 				$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'redirects')));
 			}
@@ -51,7 +54,7 @@ class Controller_Kohanut_Redirects extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Find the redirect
-		$redirect = Sprig::factory('kohanut_redirect',array('id'=>$id))->load();
+		$redirect = Jelly::select('kohanut_redirect')->load($id);
 		
 		if ( ! $redirect->loaded())
 		{
@@ -65,8 +68,8 @@ class Controller_Kohanut_Redirects extends Controller_Kohanut_Admin {
 		{
 			try
 			{
-				$redirect->values($_POST);
-				$redirect->update();
+				$redirect->set($_POST);
+				$redirect->save();
 				$success = "Updated Successfully";
 			}
 			catch (Validate_Exception $e)
@@ -90,7 +93,7 @@ class Controller_Kohanut_Redirects extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Find the redirect
-		$redirect = Sprig::factory('kohanut_redirect',array('id'=>$id))->load();
+		$redirect = Jelly::select('kohanut_redirect')->load(1);
 		
 		if ( ! $redirect->loaded())
 		{

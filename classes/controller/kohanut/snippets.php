@@ -1,20 +1,24 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Snippets Controller
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author      Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
 class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 
-	public function action_index()
+	protected $_model = 'Kohanut_Element_Snippet';
+    
+    public function action_index()
 	{
-		$snippets = Kohanut_Element::factory('snippet')->load(NULL,FALSE);
+		$snippets = Jelly::select($this->_model)->execute();
 		
 		$this->view->title = "Snippets";
-		$this->view->body = View::factory('kohanut/snippets/list',array('snippets'=>$snippets));
+		$this->view->body = View::factory('kohanut/snippets/list', array('snippets'=>$snippets));
 	}
 	
 	public function action_new()
@@ -28,7 +32,7 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 		if ($_POST)
 		{
 			
-			$snippet->values($_POST);
+			$snippet->set($_POST);
 			
 			// Make sure there are no twig syntax errors
 			if ($snippet->twig)
@@ -48,7 +52,7 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 			// Try to save
 			try
 			{
-				$snippet->create();
+				$snippet->save();
 				
 				$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'snippets')));
 			}
@@ -65,12 +69,13 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 	
 		// Find the snippet
-		$snippet = Kohanut_Element::factory('snippet')->values(array('id'=>$id));
-	
-		$snippet->load();
+		$snippet = Jelly::select($this->_model, $id);
 		
 		$this->view->title = "Editing Snippet";
-		$this->view->body = new View('kohanut/snippets/edit',array('snippet'=>$snippet,'errors'=>false,'success'=>false));
+		$this->view->body = new View(
+            'kohanut/snippets/edit',
+            array('snippet'=>$snippet, 'errors'=>false, 'success'=>false)
+            );
 		
 		if ( ! $snippet->loaded())
 		{
@@ -80,7 +85,7 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 		if ($_POST)
 		{
 			
-			$snippet->values($_POST);
+			$snippet->set($_POST);
 			
 			// Make sure there are no twig syntax errors
 			if ($snippet->twig)
@@ -100,7 +105,7 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 			// Try saving the snippet
 			try
 			{
-				$snippet->update();
+				$snippet->save();
 				$this->view->body->success = "Updated Successfully";
 			}
 			catch (Validate_Exception $e)
@@ -117,7 +122,7 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Find the snippet
-		$snippet = Kohanut_Element::factory('snippet')->values(array('id'=>$id))->load();
+		$snippet = Jelly::select($this->_model, $id);
 		
 		if ( ! $snippet->loaded())
 		{
@@ -141,7 +146,10 @@ class Controller_Kohanut_Snippets extends Controller_Kohanut_Admin {
 		}
 
 		$this->view->title = "Delete Snippet";
-		$this->view->body = View::factory('kohanut/snippets/delete',array('snippet'=>$snippet));
+		$this->view->body = View::factory(
+            'kohanut/snippets/delete',
+            array('snippet'=>$snippet)
+            );
 		
 		$this->view->body->snippet = $snippet;
 		$this->view->body->errors = $errors;

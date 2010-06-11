@@ -6,12 +6,18 @@
 		
 		<form method="post">
 		
-			<?php foreach ($element->inputs() as $label => $input): ?>
+			<?php foreach ($element->meta()->fields() as $field)
+            { 
+                if ( ! $field->primary AND $field->in_db)
+                {
+                ?>
 			<p>
-				<label><?php echo __($label) ?></label>
-				<?php echo $input ?>
+				<label><?php  echo __($field->label) ?></label>
+				<?php echo $element->input($field->name) ?>
 			</p>
-			<?php endforeach ?>
+			<?php
+                } 
+            } ?>
 			
 			<p>
 				<?php echo Form::submit('submit',__('Add Element'),array('class'=>'submit')) ?>

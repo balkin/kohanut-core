@@ -21,6 +21,11 @@
 				<label><?php echo __('Repeat Password') ?></label>
 				<?php echo $user->input('password_confirm') ?>
 			</p>
+            
+            <p>
+                <label><?php echo __('Email') ?></label>
+                <?php echo $user->input('email') ?>
+            </p>
 			
 			<p>
 				<?php echo form::submit('submit',__('Create User'),array('class'=>'submit')) ?>

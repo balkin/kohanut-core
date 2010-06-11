@@ -9,13 +9,12 @@
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Kohanut_Element_Request extends Kohanut_Element
+class Model_Kohanut_Element_Request extends Kohanut_Element
 {
-	protected $_table = 'kohanut_element_request';
-
 	public static function initialize(Jelly_Meta $meta)
 	{
-		$meta->fields(array(
+		$meta->table('kohanut_element_request')
+            ->fields(array(
 			'id' => new Field_Primary,
 			
 			'url' => new Field_String,

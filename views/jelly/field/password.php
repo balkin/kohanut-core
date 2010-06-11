@@ -1,0 +1,1 @@
+<?php echo Form::password($name, NULL, $attributes + array('id' => 'field-'.$name)); ?>

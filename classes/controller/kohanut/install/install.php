@@ -4,6 +4,7 @@
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -77,15 +78,36 @@ class Controller_Kohanut_Install_Install extends Controller {
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
 		
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_users` (
-				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-				`username` varchar(30) NOT NULL,
-				`password` varchar(40) DEFAULT NULL,
-				`last_login` datetime DEFAULT NULL,
-				PRIMARY KEY (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
-		
+        DB::query(NULL,"
+            CREATE TABLE `kohanut_roles` (
+            `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `name` varchar(32) NOT NULL,
+            `description` varchar(255) NOT NULL,
+            PRIMARY KEY  (`id`),
+            UNIQUE KEY `uniq_name` (`name`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+
+        DB::query(NULL,"
+            CREATE TABLE IF NOT EXISTS `kohanut_users` (
+            `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `email` varchar(127) NOT NULL,
+            `username` varchar(32) NOT NULL DEFAULT '',
+            `password` char(50) NOT NULL,
+            `logins` int(10) UNSIGNED NOT NULL DEFAULT '0',
+            `last_login` int(10) UNSIGNED,
+            PRIMARY KEY  (`id`),
+            UNIQUE KEY `uniq_username` (`username`),
+            UNIQUE KEY `uniq_email` (`email`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+
+        DB::query(NULL,"
+            CREATE TABLE IF NOT EXISTS `kohanut_roles_users` (
+            `user_id` int(11) UNSIGNED NOT NULL,
+            `role_id` int(11) UNSIGNED NOT NULL,
+            PRIMARY KEY  (`user_id`,`role_id`),
+            KEY `fk_role_id` (`role_id`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+ 		
 		DB::query(NULL,"
 			CREATE TABLE `kohanut_blocks` (
 				`id` int(11) NOT NULL AUTO_INCREMENT,
@@ -129,14 +151,6 @@ class Controller_Kohanut_Install_Install extends Controller {
 				`name` varchar(127) NOT NULL,
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
-		
-		// Create the admin user
-		$admin = Sprig::factory('kohanut_user',array(
-			'username'=>'admin',
-			'password'=>$_POST['password'],
-			'password_confirm'=>$_POST['password']
-		));
-		$admin->create();
 		
 		// Create sample layouts, pages, and content
 		
@@ -201,6 +215,14 @@ class Controller_Kohanut_Install_Install extends Controller {
 			
 			INSERT INTO `kohanut_redirects` (`id`, `url`, `newurl`, `type`) VALUES
 				(1, 'test', 'about', '301');
+                
+            INSERT INTO `kohanut_roles` (`id`, `name`, `description`) VALUES(1, 'login', 'Login privileges, granted after account confirmation');
+            INSERT INTO `kohanut_roles` (`id`, `name`, `description`) VALUES(2, 'admin', 'Administrative user, has access to everything.');
+
+            ALTER TABLE `kohanut_roles_users`
+                ADD CONSTRAINT `roles_users_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `kohanut_users` (`id`) ON DELETE CASCADE,
+                ADD CONSTRAINT `roles_users_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `kohanut_roles` (`id`) ON DELETE CASCADE;
+
 			
 		"));
 		
@@ -208,6 +230,17 @@ class Controller_Kohanut_Install_Install extends Controller {
 		{
 			DB::query(NULL,$query)->execute();
 		}
+        
+        // Create the admin user
+        $admin = Jelly::factory('kohanut_user')
+            ->set(array(
+            'username'=>'admin',
+            'password'=>$_POST['password'],
+            'password_confirm'=>$_POST['password'],
+            'email' => '',
+            'roles' => array(1), // login
+            ));
+        $admin->save();
 		
 		$this->request->response = new View('kohanut/install-success');
 		return;

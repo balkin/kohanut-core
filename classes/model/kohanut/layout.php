@@ -1,28 +1,30 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Layout Model
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Model_Kohanut_Layout extends Sprig {
+class Model_Kohanut_Layout extends Jelly_Model {
 
-	protected function _init()
+	public static function initialize(Jelly_Meta $meta)
 	{
-		$this->_fields += array(
-			'id' => new Sprig_Field_Auto,
+		$meta->fields(array(
+			'id' => new Field_Primary,
 			
-			'name' => new Sprig_Field_Char(array('label'=>'Name')),
-			'desc' => new Sprig_Field_Char(array('label'=>'Description')),
-			'code' => new Sprig_Field_Text(array('label'=>'Code')),
+			'name' => new Field_String(array('label'=>'Name')),
+			'desc' => new Field_String(array('label'=>'Description')),
+			'code' => new Field_Text(array('label'=>'Code')),
 			
-			'pages' => new Sprig_Field_HasMany(array(
+			'pages' => new Field_HasMany(array(
 				'model' => 'page',
-			)),
+			    )),
 			
-		);
+		    ));
 	}
 	
 	public function create()
@@ -41,7 +43,9 @@ class Model_Kohanut_Layout extends Sprig {
 		{
 			throw new Kohanut_Exception("There was an error: " . $e->getMessage() . " on line " . $e->getLine());
 		}
-		parent::create();
+        
+        $this->save();
+	
 	}
 	
 	public function update()
@@ -60,7 +64,8 @@ class Model_Kohanut_Layout extends Sprig {
 		{
 			throw new Kohanut_Exception("There was an error: " . $e->getMessage() . " on line " . $e->getLine());
 		}
-		parent::update();
+		
+        $this->save();
 	}
 	
 	public function render()
@@ -77,9 +82,9 @@ class Model_Kohanut_Layout extends Sprig {
 			$benchmark = Profiler::start('Kohanut', 'Render Layout');
 		}
 		
-		$out = Kohanut_Twig::render($this->code);
-		
-		if (isset($benchmark))
+        $out = Kohanut_Twig::render($this->code);
+        
+        if (isset($benchmark))
 		{
 			// Stop the benchmark
 			Profiler::stop($benchmark);

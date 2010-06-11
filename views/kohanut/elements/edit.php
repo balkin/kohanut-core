@@ -8,12 +8,18 @@
 		
 		<?php echo form::open(); ?>
 
-			<?php foreach ($element->inputs() as $label => $input): ?>
-			<p>
-				<label><?php echo __($label) ?></label>
-				<?php echo $input ?>
-			</p>
-			<?php endforeach ?>
+			<?php foreach ($element->meta()->fields() as $field)
+            { 
+                if ( ! $field->primary AND $field->in_db)
+                {
+                ?>
+            <p>
+                <label><?php  echo __($field->label) ?></label>
+                <?php echo $element->input($field->name) ?>
+            </p>
+            <?php
+                } 
+            } ?>
 
 			<p>
 				<?php echo Form::submit('submit',__('Save Changes'),array('class'=>'submit')) ?>

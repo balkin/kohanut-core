@@ -1,29 +1,31 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Redirect Model
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Model_Kohanut_Redirect extends Sprig {
+class Model_Kohanut_Redirect extends Jelly_Model {
 
-	protected function _init()
+	public static function initialize(Jelly_Meta $meta)
 	{
-		$this->_fields += array(
-			'id' => new Sprig_Field_Auto,
-			'url' => new Sprig_Field_Char(array(
+		$meta->fields(array(
+			'id' => new Field_Primary,
+			'url' => new Field_String(array(
 				'empty' => TRUE,
 				'default' => NULL,
-			)),
-			'newurl' => new Sprig_Field_Char(array(
+			    )),
+			'newurl' => new Field_String(array(
 				
-			)),
-			'type' => new Sprig_Field_Enum(array(
+			    )),
+			'type' => new Field_Enum(array(
 				'choices' => array('301'=> '301 ('.__('permanent').')' ,'302'=> '302 ('.__('temporary').')' ),
-			)),
-		);
+			    )),
+		    ));
 	}
 	
 	/**
@@ -31,11 +33,13 @@ class Model_Kohanut_Redirect extends Sprig {
 	 *
 	 * @return  boolean   true if found, false if not
 	 */
-	public function find($url) {
+	public function find($url) 
+    {
 		// Check for a redirect at $url
-		$this->url = $url;
-		$this->load();
-		return $this;
+        return Jelly::select($this)
+            ->where('url', '=', $url)
+            ->limit(1)
+            ->execute();
 	}
 	
 	public function go() {

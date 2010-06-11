@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Users Controller
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -16,13 +18,13 @@ class Controller_Kohanut_Users extends Controller_Kohanut_Admin {
 
 	public function action_index()
 	{
-		$users = Sprig::factory('kohanut_user')->load(NULL,FALSE);
+		$users = Jelly::select('kohanut_user')->execute();
 		$this->view->body = View::factory('kohanut/users/list',array('users'=>$users));
 	}
 	
 	public function action_new()
 	{
-		$user = Sprig::factory('kohanut_user');
+        $user = Jelly::factory('kohanut_user');
 		
 		$errors = false;
 		
@@ -30,9 +32,15 @@ class Controller_Kohanut_Users extends Controller_Kohanut_Admin {
 		{
 			try
 			{
-				$user->values($_POST);
-				$user->create();
-				
+				$user->set($_POST);
+                $user->set(array(
+                    'roles' => Jelly::select('kohanut_role')
+                        ->where('name', '=', 'login')
+                        ->limit(1)
+                        ->execute()
+                    ));
+                $user->save();
+                
 				Request::instance()->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'users')));
 			}
 			catch (Validate_Exception $e)
@@ -53,9 +61,9 @@ class Controller_Kohanut_Users extends Controller_Kohanut_Admin {
 		// Sanitize
 		$id = (int) $id;
 		
-		// Find the layout
-		$user = Sprig::factory('kohanut_user',array('id'=>$id))->load();
-		
+		// Find the user
+        $user = Jelly::select('kohanut_user', $id);
+        		
 		if ( ! $user->loaded())
 			return $this->admin_error("Could not find user with id <strong>$id</strong>");
 	
@@ -66,8 +74,13 @@ class Controller_Kohanut_Users extends Controller_Kohanut_Admin {
 		{
 			try
 			{
-				$user->values($_POST);
-				$user->update();
+				if (empty($_POST['password']))
+                {
+                    unset($_POST['password'], $_POST['password_confirm']);
+                }
+                
+                $user->set($_POST);
+				$user->save();
 				$success = "Updated Successfully";
 			}
 			catch (Validate_Exception $e)
@@ -90,7 +103,7 @@ class Controller_Kohanut_Users extends Controller_Kohanut_Admin {
 		$id = (int) $id;
 		
 		// Find the user
-		$user = Sprig::factory('kohanut_user',array('id'=>$id))->load();
+        $user = Jelly::select('kohanut_user', $id);
 		
 		if ( ! $user->loaded())
 			return $this->admin_error("Could not find user with id <strong>$id</strong>");

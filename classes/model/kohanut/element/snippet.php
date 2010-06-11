@@ -1,17 +1,17 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Snippet Element. Similar to content, but not unique, and therefore reusable.
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author      Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Kohanut_Element_Snippet extends Kohanut_Element
+class Model_Kohanut_Element_Snippet extends Kohanut_Element
 {
 	protected $_unique = FALSE;
-	
-	//protected $_table = 'kohanut_element_snippet';
 	
     public static function initialize(Jelly_Meta $meta)
 	{
@@ -21,9 +21,9 @@ class Kohanut_Element_Snippet extends Kohanut_Element
 			'id' => new Field_Primary,
 			'name' => new Field_String,
 			'code' => new Field_Text,
-			'markdown' => new Field_Boolean(array(/*'append_label'=>false,*/'default'=>true)),
+			'markdown' => new Field_Boolean(array('default'=>true)),
 			
-			'twig' => new Field_Boolean(array(/*'append_label'=>false,*/'default'=>false)),
+			'twig' => new Field_Boolean(array('default'=>false)),
 		    ));
 	}
 
@@ -61,12 +61,14 @@ class Kohanut_Element_Snippet extends Kohanut_Element
 			try
 			{
 				$id = Arr::get($_POST,'element',NULL);
-				$this->id = (int) $id;
-				$this->load();
-				if ( ! $this->loaded())
-					throw new Kohanut_Exception('Attempting to add an element that does not exist. Id: {$this->id}');
+				//$this->id = (int) $id;
+				//$this->load((int) $id);
+
+                $element = Jelly::select($this, (int) $id);
+				if ( ! $element->loaded())
+					throw new Kohanut_Exception('Attempting to add an element that does not exist. Id: {$id}');
 				
-				$this->create_block($page,$area);
+				$element->create_block($page, $area);
 				Request::instance()->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages','action'=>'edit','params'=>$page)));
 			}
 			catch (Validate_Exception $e)
@@ -86,10 +88,12 @@ class Kohanut_Element_Snippet extends Kohanut_Element
 		{
 			try
 			{
-				$this->block->set($_POST);
+				$element = $this;
+                
+                $this->block->set($_POST);
 				$this->block->save();
-				$this->id = $this->block->element;
-				$this->load();
+                
+                $view->element = Jelly::select($this, $this->block->element);
 				$view->success = "Update successfully";
 			}
 			catch (Validate_Exception $e)
@@ -106,7 +110,7 @@ class Kohanut_Element_Snippet extends Kohanut_Element
 	 * @param array values
 	 * @return $this
 	 */
-	public function set($values, $value = NULL)
+    public function set($values, $value = NULL)
 	{
 		if ( ! is_array($values))
         {

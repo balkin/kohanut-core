@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Pages Controller
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author      Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -16,21 +18,24 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 		$this->view->body = new View('kohanut/pages/list');
 		
 		// Build the page tree
-		$root = Sprig_Mptt::factory('kohanut_page',array('lft'=>1))->load();
+		$root = Jelly::select('kohanut_page')
+            ->where('lft', '=', 1)
+            ->limit(1)
+            ->execute();
 
 		if ( ! $root->loaded())
 		{
 			return $this->admin_error("Could not load root node.");
 		}
 		
-		// Attach the page tree to the view
-		$this->view->body->list = $root->render_descendants('kohanut/pages/mptt',true,'ASC',10);
+        // Attach the page tree to the view
+		$this->view->body->list = $root->render_descendants('kohanut/pages/mptt', true, 'ASC', 10);
 	}
 	
 	public function action_meta($id)
 	{
 		// Find the page
-		$page = Sprig::factory('kohanut_page',array('id'=>$id))->load();
+		$page = Jelly::select('kohanut_page', $id);
 
 		if ( ! $page->loaded())
 		{
@@ -45,7 +50,9 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 		{
 			try
 			{
-				$page->values($_POST)->update();
+				$page
+                    ->set($_POST)
+                    ->save();
 				$this->view->body->success = __('Updated successfully');
 			}
 			catch (Validate_Exception $e)
@@ -62,31 +69,31 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 	public function action_edit($id)
 	{
 		// Find the page
-		$page = Sprig::factory('kohanut_page',array('id'=>$id))->load();
+		$page = Jelly::select('kohanut_page', $id);
 
 		if ( ! $page->loaded())
 		{
-			return $this->admin_error(__('Could not find page with ID :id.',array(':id'=>$id)));
+			return $this->admin_error(__('Could not find page with ID :id.', array(':id'=>$id)));
 		}
 		
 		// If this page is an external link, there is no content to edit, redirect to edit meta
 		if ($page->islink)
 		{
-			$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages','action'=>'meta','params'=>$id)));
+			$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages', 'action'=>'meta', 'params'=>$id)));
 		}
 		
 		// If there is post, they are adding a new element
 		if ($_POST)
 		{
-			$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'elements','action'=>'add','params'=>Arr::get($_POST,'type',NULL) .'/'. $id .'/' . Arr::get($_POST,'area',NULL))));
+			$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'elements', 'action'=>'add', 'params'=>Arr::get($_POST,'type',NULL) .'/'. $id .'/' . Arr::get($_POST,'area',NULL))));
 		}
 		
 		// Make it so the usual admin stuff is not shown
-		$this->auto_render = false;
+		$this->auto_render = FALSE;
 		
 		// Make it so the admin pane for pages is shown
-		Kohanut::$adminmode = true;
-		Kohanut::style( Route::get('kohanut-media')->uri(array('file'=>'css/page.css')));
+		Kohanut::$adminmode = TRUE;
+		Kohanut::style(Route::get('kohanut-media')->uri(array('file'=>'css/page.css')));
 		
 		// Render the page
 		$this->request->response = $page->render();
@@ -95,7 +102,7 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 	public function action_add($id)
 	{
 		// Find the parent
-		$parent = Sprig::factory('kohanut_page',array('id'=>$id))->load();
+		$parent = Jelly::select('kohanut_page', $id);
 
 		if ( ! $parent->loaded())
 		{
@@ -103,7 +110,7 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 		}
 		
 		// Create the new page object
-		$page = Sprig::factory('kohanut_page');
+		$page = Jelly::factory('kohanut_page');
 		
 		// Create the view
 		$this->view->title=__('Adding New Page');
@@ -113,8 +120,8 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 		{
 			try
 			{
-				$page->values($_POST);
-				$page->create_at($parent,Arr::get($_POST,'location','last'));
+				$page->set($_POST);
+				$page->create_at($parent, Arr::get($_POST,'location','last'));
 				
 				// Page was created successfully, redirect to edit
 				$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages','action'=>'edit','params'=>$page->id)));
@@ -133,7 +140,7 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 	public function action_move($id)
 	{
 		// Find the page
-		$page = Sprig::factory('kohanut_page',array('id'=>$id))->load();
+		$page = Jelly::select('kohanut_page', $id);
 
 		if ( ! $page->loaded())
 		{
@@ -161,7 +168,7 @@ class Controller_Kohanut_Pages extends Controller_Kohanut_Admin {
 	public function action_delete($id)
 	{
 		// Find the page
-		$page = Sprig::factory('kohanut_page',array('id'=>$id))->load();
+		$page = Jelly::select('kohanut_page', $id);
 
 		if ( ! $page->loaded())
 		{

@@ -18,9 +18,9 @@
 			</p>
 			
 			<p>
-				<?php echo $snippet->input('markdown',array('class'=>'check')) ?>
+				<?php echo $snippet->input('markdown', array('attributes' => array('class'=>'check'))) ?>
 				<?php echo __('Enable :Markdown',array(':Markdown'=>html::anchor('http://kohanut.com/docs/using.markdown','Markdown',array('target'=>'_blank')))) ?>
-				<?php echo $snippet->input('twig',array('class'=>'check')) ?>
+				<?php echo $snippet->input('twig', array('attributes' => array('class'=>'check'))) ?>
 				<?php echo __('Enable :Twig',array(':Twig'=>html::anchor('http://kohanut.com/docs/using.kohanut','Twig',array('target'=>'_blank')))) ?>
 			</p>
 			

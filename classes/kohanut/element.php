@@ -1,13 +1,15 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut_Elements are the blood of Kohanut. Every page is made up of elements.
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-abstract class Kohanut_Element extends Sprig
+abstract class Kohanut_Element extends Jelly_Model
 {
 
 	/**
@@ -41,17 +43,17 @@ abstract class Kohanut_Element extends Sprig
 	 * @param  int  Which area to add to
 	 * @return view
 	 */
-	public function action_add($page,$area)
+	public function action_add($page, $area)
 	{
-		$view = View::factory('kohanut/elements/add',array('element'=>$this,'page'=>$page,'area'=>$area));
+		$view = View::factory('kohanut/elements/add',array('element'=>$this, 'page'=>$page, 'area'=>$area));
 		
 		if ($_POST)
 		{
 			try
 			{
-				$this->values($_POST);
-				$this->create();
-				$this->create_block($page,$area);
+				$this->set($_POST);
+				$this->save();
+				$this->create_block($page, $area);
 				Request::instance()->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages','action'=>'edit','params'=>$page)));
 			}
 			catch (Validate_Exception $e)
@@ -69,14 +71,14 @@ abstract class Kohanut_Element extends Sprig
 	 */
 	public function action_edit()
 	{
-		$view = View::factory('kohanut/elements/edit',array('element'=>$this));
+		$view = View::factory('kohanut/elements/edit', array('element'=>$this));
 		
 		if ($_POST)
 		{
 			try
 			{
-				$this->values($_POST);
-				$this->update();
+				$this->set($_POST);
+				$this->save();
 				$view->success = "Update successfully";
 			}
 			catch (Validate_Exception $e)
@@ -105,9 +107,10 @@ abstract class Kohanut_Element extends Sprig
 				$this->delete();
 			}
 			
+            $page_id = $this->block->page->id;
 			// Delete the block
 			$this->block->delete();
-			Request::instance()->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages','action'=>'edit','params'=>$this->block->page->id)));
+			Request::instance()->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'pages','action'=>'edit','params'=>$page_id)));
 		}
 		
 		return $view;
@@ -123,7 +126,7 @@ abstract class Kohanut_Element extends Sprig
 	 */
 	final public function type()
 	{
-		return str_replace('Kohanut_Element_','',get_class($this));
+		return str_replace('Model_Kohanut_Element_','',get_class($this));
 	}
 	
 	/**
@@ -132,20 +135,14 @@ abstract class Kohanut_Element extends Sprig
 	 * @param  string  The type of element to create
 	 * @return Kohanut_Element object
 	 */
-	final public static function factory($name, array $values = NULL)
+	final public static function factory($name, $values = NULL)
 	{
-		$model = 'Kohanut_Element_' . $name;
-		$model = New $model;
+		$model = 'Model_Kohanut_Element_' . $name;
 		
-		if ($values)
-		{
-			$model->values($values);
-		}
-		
-		return $model;
-	}
-	
-	/**
+        return new $model($values);
+    }
+    
+    /**
 	 * Render the element, including the panel if we are in admin mode
 	 *
 	 * @return string
@@ -155,28 +152,33 @@ abstract class Kohanut_Element extends Sprig
 		// Ensure the element is loaded.
 		if ( ! $this->loaded())
 		{
-			$this->id = $this->block->element;
 			// Load the element
-			$this->load();
+			$element = Jelly::select($this, $this->block->element);
+
 			// If its still not loaded, something is wrong.
-			if ( ! $this->loaded())
+			if ( ! $element->loaded())
 			{
 				throw new Kohanut_Exception('Rendering of element failed, element could not be loaded. Block id # :id',array('id',$this->block->id));
 			}
-		}
-		
-		$out = "";
+            
+            // FIXME
+            $element->block = $this->block;
+		} else {
+            $element = $this;
+        }
+        
+        $out = "";
 		
 		// If admin mode, render the panel
 		if (Kohanut::$adminmode)
 		{
-			$out .= $this->render_panel();
+			$out .= $element->render_panel();
 		}
 		
 		// And render the actual element
 		try
 		{
-			$out .= $this->_render();
+			$out .= $element->_render();
 		}
 		catch (Exception $e)
 		{
@@ -193,7 +195,7 @@ abstract class Kohanut_Element extends Sprig
 	 */
 	final public function render_panel()
 	{
-		// Block is null when this element was not called from Kohanut::content_area(), so don't draw the content area controls
+		// Block is null when this element was not called from Kohanut::element_area(), so don't draw the content area controls
 		if ($this->block == NULL)
 			return;
 		
@@ -213,8 +215,8 @@ abstract class Kohanut_Element extends Sprig
 		// You can only create a block for an element that exists
 		if ( ! $this->loaded())
 			throw new Kohanut_Exception("Attempting to create a block for an element that does not exist, or has not been created yet.");
-			
-		Sprig::factory('kohanut_block')->add($page,$area,$this->type(),$this->id);
+		
+        Jelly::factory('kohanut_block')->create($page, $area, $this->type(), $this->id);
 	
 	}
 	

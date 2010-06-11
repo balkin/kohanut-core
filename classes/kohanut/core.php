@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * This is the static Kohanut Class that can be used to do various CMS like things through the app.
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -159,7 +161,10 @@ class Kohanut_Core {
 		
 		$parents = self::$page->parents(); //->render_descendants('mainnav',true,'ASC',$maxdepth);
 		
-		$out = View::factory('kohanut/breadcrumbs')->set('nodes',$parents)->set('page',self::$page->name)->render();
+		$out = View::factory('kohanut/breadcrumbs')
+            ->set('nodes',$parents)
+            ->set('page',self::$page->name)
+            ->render();
 		
 		if (isset($benchmark))
 		{
@@ -210,7 +215,7 @@ class Kohanut_Core {
 	public static function element_area($id,$name)
 	{
 		// Ensure that Kohanut::page has been set and loaded a real page
-		if (!is_object(self::$page) || !self::$page->loaded()) {
+		if ( ! is_object(self::$page) || ! self::$page->loaded()) {
 			return "Kohanut Error: element_area($id) failed. (Kohanut::page was not set)";
 		}
 		
@@ -220,7 +225,7 @@ class Kohanut_Core {
 			$benchmark = Profiler::start('Kohanut', __FUNCTION__);
 		}
 		
-		// If Kohanut::$_content is set, we are overriding the render
+        // If Kohanut::$_content is set, we are overriding the render
 		if (self::$_content !== NULL)
 		{
 			return new View('kohanut/elementarea',array(
@@ -230,21 +235,22 @@ class Kohanut_Core {
 			));
 		}
 		
-		$query = DB::select()->order_by('order','ASC');
-		
-		$elements = Sprig::factory('kohanut_block',array(
-			'page' => self::$page->id,
-			'area' => $id,
-		))->load($query,FALSE);
-		
-		$content = "";
+		$elements = Jelly::select('kohanut_block')
+            ->where('page', '=', self::$page->id)
+			->where('area', '=', $id)
+            ->order_by('order','ASC')
+            ->execute();
+            
+        $content = "";
 		
 		foreach ($elements as $item) {
 			// Create an instance of the element and render it
 			try
 			{
-				$element = Kohanut_Element::factory($item->elementtype->load()->name);
-				$element->id = $item->element;
+                $model = 'Kohanut_Element_'.$item->elementtype->name;
+                
+				$element = Jelly::factory($model);
+                $element->id = $item->element;
 				$element->block = $item;
 				$content .= $element->render();
 			}
@@ -258,7 +264,7 @@ class Kohanut_Core {
 			'id' => $id,
 			'name' => $name,
 			'content' => $content
-		))->render();
+		    ))->render();
 		
 		if (isset($benchmark))
 		{
@@ -279,7 +285,7 @@ class Kohanut_Core {
 	 * @param  name    The name of the element
 	 * @return string
 	 */
-	public static function element($type,$name)
+	public static function element($type, $name)
 	{
 		if (Kohana::$profiling === TRUE)
 		{
@@ -290,9 +296,14 @@ class Kohanut_Core {
 		// Create an instance of the element
 		try
 		{
-			$element = Kohanut_Element::factory($type);
-			$element->name = $name;
-			$element->load();
+
+            $model = 'Kohanut_Element_'.$type;
+            
+            $element = Jelly::select($model)
+                ->where('name', '=', $name)
+                ->limit(1)
+                ->execute();
+            
 		}
 		catch (Exception $e)
 		{
@@ -301,7 +312,7 @@ class Kohanut_Core {
 		
 		// If its loaded, render it, otherwise display an error.
 		if ($element->loaded())
-		{
+        {
 			$out = $element->render();
 		}
 		else
@@ -439,12 +450,18 @@ class Kohanut_Core {
 		}
 		
 		// Find the layout
-		$layout = Sprig::factory('kohanut_layout',array('name'=>$layoutname))->load();
+		$layout = Jelly::select('kohanut_layout')
+            ->where('name', '=', $layoutname)
+            ->limit(1)
+            ->execute();
 		if ( ! $layout->loaded())
 			throw new Kohanut_Exception("Kohanut::override() failed because the layout with name '$layoutname' could not be found");
 			
 		// Find the Page
-		$page = Sprig::factory('kohanut_page',array('url'=>$pageurl))->load();
+		$page = Jelly::select('kohanut_page')
+            ->where('url', '=', $pageurl)
+            ->limit(1)
+            ->execute();
 		if ( ! $page->loaded())
 			throw new Kohanut_Exception("Kohanut::override() failed because the page with url '$pageurl' could not be found.");
 			

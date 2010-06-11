@@ -26,7 +26,7 @@
 			<?php include Kohana::find_file('views', 'kohanut/errors') ?>
 			<?php echo form::open(NULL, array('id' => 'login')) ?>
 			
-			 <p><label><?php echo __('Username:') ?></label> <?php echo form::input('username', $user->username) ?></p>
+			 <p><label><?php echo __('Username:') ?></label> <?php echo form::input('username', $username) ?></p>
 			 <p><label><?php echo __('Password:') ?></label> <?php echo form::password('password') ?></p>
 			
 			<p>

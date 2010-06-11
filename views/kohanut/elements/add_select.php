@@ -10,9 +10,10 @@
 				<label for="which"><?php echo __('Select a :element',array(':element'=>__(ucfirst($element->type())))) ?></label>
 				<?php
 				
-				$choices = $element->select_list($element->pk());
-				
-				echo Form::select('element', $choices, $element->id) ?>
+                //$choices = $element->select_list($element->meta()->primary_key());
+				$choices = Jelly::select($element)->execute();
+				                                
+				echo Form::select('element', $choices->as_array('id', 'name'), $element->id) ?>
 				
 			</p>
 			

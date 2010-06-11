@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Layouts controller
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -15,13 +17,16 @@ class Controller_Kohanut_Layouts extends Controller_Kohanut_Admin {
 		$this->view->body = new View('kohanut/layouts/list');
 		
 		// Get the list of layouts
-		$this->view->body->layouts = Sprig::factory('kohanut_layout')->load(NULL,FALSE);
+		$this->view->body->layouts = Jelly::select('kohanut_layout')->execute();
 	}
 	
 	public function action_edit($id)
 	{
 		// Find the layout
-		$layout = Sprig::factory('kohanut_layout',array('id'=>$id))->load();
+		$layout = Jelly::select('kohanut_layout')
+            ->where('id', '=', $id)
+            ->limit(1)
+            ->execute();
 		
 		if ( ! $layout->loaded())
 		{
@@ -34,12 +39,12 @@ class Controller_Kohanut_Layouts extends Controller_Kohanut_Admin {
 
 		if ($_POST)
 		{
-			$layout->values($_POST);
+			$layout->set($_POST);
 			
 			// Try to save the layout
 			try
 			{
-				$layout->update();
+				$layout->save();
 				$this->view->body->success = __('Updated Successfully');
 			}
 			catch (Validate_Exception $e)
@@ -55,7 +60,7 @@ class Controller_Kohanut_Layouts extends Controller_Kohanut_Admin {
 	
 	public function action_new()
 	{
-		$layout = Sprig::factory('kohanut_layout');
+		$layout = Jelly::factory('kohanut_layout');
 		
 		// Create the view
 		$this->view->title = "New Layout";
@@ -63,12 +68,12 @@ class Controller_Kohanut_Layouts extends Controller_Kohanut_Admin {
 		
 		if ($_POST)
 		{
-			$layout->values($_POST);
+			$layout->set($_POST);
 			
 			// Try to save the layout
 			try
 			{
-				$layout->create();
+				$layout->save();
 				$this->request->redirect(Route::get('kohanut-admin')->uri(array('controller'=>'layouts')));
 			}
 			catch (Validate_Exception $e)
@@ -85,7 +90,10 @@ class Controller_Kohanut_Layouts extends Controller_Kohanut_Admin {
 	public function action_delete($id)
 	{
 		// Find the layout
-		$layout = Sprig::factory('kohanut_layout',array('id'=>$id))->load();
+		$layout = Jelly::select('kohanut_layout')
+            ->where('id', '=', $id)
+            ->limit(1)
+            ->execute();
 		
 		if ( ! $layout->loaded())
 		{

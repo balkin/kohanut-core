@@ -1,53 +1,58 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Kohanut Page Model
+ * Modified for Jelly modelling system
  *
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
-class Model_Kohanut_Page extends Sprig_MPTT {
+class Model_Kohanut_Page extends Jelly_Model_MPTT {
 
 	protected $_directory = '';
 
-	protected function _init()
+	public static function initialize(Jelly_Meta $meta)
 	{
 		
-		$this->_fields += array(
-			'id' => new Sprig_Field_Auto,
+		$meta->fields(array(
+			'id' => new Field_Primary,
 			
 			// url and display name
-			'url' => new Sprig_Field_Char(array(
+			'url' => new Field_String(array(
 				'empty' => TRUE,
 				'default' => NULL,
-			)),
-			'name' => new Sprig_Field_Char,
+			    )),
+			'name' => new Field_String,
 			
 			//layout
-			'layout'  => new Sprig_Field_BelongsTo(array(
+			'layout'  => new Field_BelongsTo(array(
 				'model' => 'kohanut_layout',
+                'foreign' => 'kohanut_layout.id',
 				'column' => 'layout',
-			)),
+			    )),
 			
 			// nav info
-			'islink'   => new Sprig_Field_Boolean(array('append_label'=>false,'default'=>false)),
-			'shownav'  => new Sprig_Field_Boolean(array('append_label'=>false,'default'=>true)),
-			'showmap'  => new Sprig_Field_Boolean(array('append_label'=>false,'default'=>true)),
+			'islink'   => new Field_Boolean(array(/*'append_label'=>false,*/'default'=>FALSE)),
+			'shownav'  => new Field_Boolean(array(/*'append_label'=>false,*/'default'=>TRUE)),
+			'showmap'  => new Field_Boolean(array(/*'append_label'=>false,*/'default'=>TRUE)),
 			
 			// meta datums
-			'title'    => new Sprig_Field_Char(array('empty'=>true)),
-			'metadesc' => new Sprig_Field_Text(array('empty'=>true)),
-			'metakw'   => new Sprig_Field_Text(array('empty'=>true)),
+			'title'    => new Field_String(array('empty'=>true)),
+			'metadesc' => new Field_Text(array('empty'=>true)),
+			'metakw'   => new Field_Text(array('empty'=>true)),
 			
 			//MPTT
-			'lft' => new Sprig_Field_MPTT_Left,
-			'rgt' => new Sprig_Field_MPTT_Right,
-			'lvl' => new Sprig_Field_MPTT_Level,
-			'scp' => new Sprig_Field_MPTT_Scope,
+			'lft' => new Jelly_Field_MPTT_Left,
+			'rgt' => new Jelly_Field_MPTT_Right,
+			'lvl' => new Jelly_Field_MPTT_Level,
+			'scp' => new Jelly_Field_MPTT_Scope,
 			
-		);
-	
+		));
+        
+        parent::initialize($meta);
+	    
 	}
 	
 	/**
@@ -67,7 +72,7 @@ class Model_Kohanut_Page extends Sprig_MPTT {
 			throw new Kohanut_Exception("You must select a layout for a page that is not an external link.");
 		}
 		
-		// Create the page as first child, last child, or as next sibling based on location
+        // Create the page as first child, last child, or as next sibling based on location
 		if ($location == 'first')
 		{
 			$this->insert_as_first_child($parent);
@@ -78,7 +83,8 @@ class Model_Kohanut_Page extends Sprig_MPTT {
 		}
 		else
 		{
-			$target = Sprig::factory('kohanut_page',array('id'=> (int) $location))->load();
+			$target = Jelly::select('kohanut_page', (int) $location);
+                
 			if ( ! $target->loaded())
 			{
 				throw new Kohanut_Exception("Could not create page, could not find target for insert_as_next_sibling id: " . (int) $location);
@@ -90,10 +96,10 @@ class Model_Kohanut_Page extends Sprig_MPTT {
 	public function move_to($action,$target)
 	{
 		// Find the target
-		$target = Sprig::factory('kohanut_page',array('id'=>$target))->load();
+		$target = Jelly::select('kohanut_page', $target);
 		
 		// Make sure it exists
-		if ( !$target->loaded())
+		if ( ! $target->loaded())
 		{
 			throw new Kohanut_Exception("Could not move page, target page did not exist." . (int) $target->id );
 		}
@@ -110,18 +116,18 @@ class Model_Kohanut_Page extends Sprig_MPTT {
 			throw new Kohanut_Exception("Could not move page, action should be 'before', 'after', 'first' or 'last'.");
 	}
 	
-	/**
-	 * On update, make sure layout is set if its not an external link
-	 */
-	public function update()
-	{
-		// Make sure a layout is set if this isn't an external link
-		if ( ! $this->islink AND empty($this->layout->id))
-		{
-			throw new Kohanut_Exception("You must select a layout for a page that is not an external link.");
-		}
-		parent::update();
-	}
+    
+    public function save($key = NULL)
+    {
+        // Make sure a layout is set if this isn't an external link
+        if ( ! $this->islink AND empty($this->layout->id))
+        {
+            throw new Kohanut_Exception("You must select a layout for a page that is not an external link.");
+        }
+        
+        parent::save($key);
+        
+    }
 	
 	/**
 	 * Renders the page
@@ -139,13 +145,13 @@ class Model_Kohanut_Page extends Sprig_MPTT {
 		Kohanut::$page = $this;
 		
 		// Build the view
-		return new View('kohanut/xhtml', array('layoutcode' => $this->layout->load()->render()));
+		return new View('kohanut/xhtml', array('layoutcode' => $this->layout->render()));
 		
 	}
 	
 	public function nav_nodes($depth)
 	{
-		$query = DB::select()
+		$query = Jelly::select($this)
 			->where($this->left_column, '>=', $this->{$this->left_column})
 			->where($this->right_column, '<=', $this->{$this->right_column})
 			->where($this->scope_column, '=', $this->{$this->scope_column})
@@ -153,28 +159,29 @@ class Model_Kohanut_Page extends Sprig_MPTT {
 			->where('shownav','=',true)
 			->order_by($this->left_column, 'ASC');
 		
-		return Sprig_MPTT::factory($this->_model)->load($query,FALSE);
+		return $query->execute();
 	}
 	
 	
-	/** overload values to fix checkboxes
-	 *
-	 * @param array values
-	 * @return $this
-	 */
-	public function values(array $values)
-	{
-		if ($this->loaded()){
-			$new = array(
-				'islink'  => 0,
-				'showmap' => 0,
-				'shownav' => 0.
-			);
-			return parent::values(array_merge($new,$values));
-		}
-		else
-		{
-			return parent::values($values);
-		}
-	}
+    public function set($values, $value = NULL)
+    {
+        if ($this->loaded())
+        {
+            $new = array(
+                'islink'  => 0,
+                'showmap' => 0,
+                'shownav' => 0.
+                );
+                
+            if (is_array($values))
+            {
+                return parent::set(array_merge($new, $values)); 
+            }
+            return parent::set(array_merge($new, array($values => $value)));
+        }
+        else
+        {
+            return parent::set($values);
+        }
+    }
 }

@@ -1,9 +1,11 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 /**
  * This is the Kohanut controller, it's responsible for rendering pages
+ * Modified for Jelly modelling system
  * 
  * @package    Kohanut
  * @author     Michael Peters
+ * @author     Alexander Kupreyeu (Kupreev)
  * @copyright  (c) Michael Peters
  * @license    http://kohanut.com/license
  */
@@ -40,7 +42,7 @@ class Controller_Kohanut extends Controller
 	 */ 
 	public function action_view($url=NULL)
 	{
-
+        
 		if (Kohana::$profiling === TRUE)
 		{
 			// Start a new benchmark
@@ -76,12 +78,17 @@ class Controller_Kohanut extends Controller
 			}
 			
 			// Check for a redirect on this url
-			Sprig::factory('kohanut_redirect',array('url',$url))->go();
+			Jelly::factory('kohanut_redirect')
+                ->set(array('url', $url))
+                ->go();
 			
 			// Find the page that matches this url, and isn't an external link
-			$query = DB::select()->where('url','=',$url)->where('islink','=',0);
-			$page = Sprig::factory('kohanut_page')->load($query);
-			
+			$page = Jelly::select('kohanut_page')
+                ->where('url', '=', $url)
+                ->where('islink', '=', 0)
+                ->limit(1)
+                ->execute();
+			  
 			if ( ! $page->loaded())
 			{
 				// Could not find page in database, throw a 404
@@ -91,13 +98,16 @@ class Controller_Kohanut extends Controller
 			
 			// Set the status to 200, rather than 404, which was set by the router with the reflectionexception
 			Kohanut::status(200);
-			
-			$out = $page->render();
-		}
+
+            $out = $page->render();
+        }
 		catch (Kohanut_Exception $e)
 		{
 			// Find the error page
-			$error = Sprig::factory('kohanut_page',array('url'=>'error'))->load();
+			$error = Jelly::select('kohanut_page')
+                ->where('url', '=', 'error')
+                ->limit(1)
+                ->execute();
 			
 			// If i couldn't find the error page, just give a generic message
 			if ( ! $error->loaded())

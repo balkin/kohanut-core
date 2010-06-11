@@ -25,22 +25,22 @@
 			</p>
 			<p>
 				<label><?php echo __('URL') ?><small><?php echo __('This is the "link" to the page, or whats in the address bar.') ?></small></label>
-				<?php echo $page->input('url',array('id'=>'kohanut_url')); ?>
+				<?php echo $page->input('url', array('attributes' => array('id'=>'kohanut_url'))); ?>
 			</p>
 			
 			<p id="kohanut_url_note"><?php echo __('If you are seeing this text, you might have javascript disabled.') ?></p>
 			
 			<p>
 				<label><?php echo __('External Link') ?><small><?php echo __('Checking this will mean you can\'t edit this page here, it simply links to the URL above.') ?></small></label>
-				<?php echo $page->input('islink',array('class'=>'check','id'=>'kohanut_islink')) ?>
+				<?php echo $page->input('islink', array('attributes' => array('class'=>'check','id'=>'kohanut_islink'))) ?>
 			</p>
 			<p>
 				<label><?php echo __('Show in Navigation') ?><small><?php echo __('Check this to have this page show in the navigation menus.') ?></small></label>
-				<?php echo $page->input('shownav',array('class'=>'check')) ?>
+				<?php echo $page->input('shownav', array('attributes' => array('class'=>'check'))) ?>
 			</p>
 			<p>
 				<label><?php echo __('Show in Site Map') ?><small><?php echo __('Check this to have this page show in the site map.') ?></small></label>
-				<?php echo $page->input('showmap',array('class'=>'check')) ?>
+				<?php echo $page->input('showmap', array('attributes' => array('class'=>'check'))) ?>
 			</p>
 			
 			<p>
