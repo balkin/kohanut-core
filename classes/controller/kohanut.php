@@ -121,4 +121,55 @@ class Controller_Kohanut extends Controller
 		// Set the response
 		$this->request->response = $out;
 	}
+	
+	/**
+	 * Auto-generates an XML sitemap from the current pages.
+	 *
+	 * Add sitemap route to bootstrap.php to use:
+	 *
+	 * 		Route::set('sitemap', 'sitemap.xml')
+	 *			->defaults(array(
+	 *				'controller' => 'kohanut',
+	 *				'action'	 => 'sitemap',
+	 *			));
+	 *
+	 *
+	 * @return void
+	 * @author Tony Holdstock-Brown
+	 * @since  NA
+	 **/
+	public function action_sitemap()
+	{
+		// build query for everything that's not a link (external links all [should] have :// in them)
+		$query = DB::select()->where('URL', 'NOT LIKE', '%://%')->group_by('url');
+		
+		// load all pages
+		$pages =  Sprig::factory('kohanut_page')->load($query, FALSE);
+	
+		// set response variable with initial sitemap data.
+		$response  = '<?xml version="1.0" encoding="UTF-8"?>';
+		$response .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+		
+		// iterate through each page and add to sitemap
+		foreach($pages as $page)
+		{	
+			/**
+			 * @todo maybe have a sitemap flag in the database? could exclude error pages etc. then?
+			 * @todo check for HTTPS etc.. it's a tad hacked 
+			 */
+			$response .= '<url>';
+			$response .= '<loc>';
+			$response .= 'http://' . $_SERVER['HTTP_HOST'] . '/' . $page->url;
+			$response .= '</loc>';
+			$response .= '</url>';
+		}
+		$response .= "</urlset>";
+		
+		// set header content type as xml, or it will render as html.
+		$this->request->headers = array("Content-Type" => "text/xml");
+		
+		// echo it out
+		$this->request->response = $response;
+	}
+
 }
