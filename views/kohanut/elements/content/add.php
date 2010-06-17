@@ -24,7 +24,7 @@
 			</p>
 			<p>
 			
-		</form>
+		<?php echo form::close();?>
 		
 		<div class="clear"></div>
 		
