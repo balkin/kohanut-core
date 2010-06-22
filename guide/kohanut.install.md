@@ -23,7 +23,7 @@ To install Kohanut, follow these instructions:
    'persistent' => FALSE,
    'database'   => 'PUT DATABASE HERE',
    ~~~
-   
+
 4.  Now point your browser to `/admin/install` and enter a password for the user `admin`, and click install. If you get no errors, then Kohanut is installed!
 
 5.  For security, you should rename `modules/kohanut/controllers/admin/install` to something like `modules/kohanut/controllers/admin/installed`
@@ -45,7 +45,7 @@ To install Kohanut, follow these instructions:
    git submodule update
    ~~~
 
-   
+
 2. Continue from step 2 above
 
 ## Putting Kohanut in a subfolder
@@ -57,11 +57,20 @@ In **.htaccess**
     RewriteBase /
     -- change to --
     RewriteBase /subfolder
-  
+
 In **application/bootstrap.php**
-   
+
     'base_url'   => '/',
     -- change to --
     'base_url'   => '/subfolder',
 
 If you put Kohanut in a subfolder, the links on all your pages will probably be broken, especially if you move a site that is already made. You could probably fix it by adding a [<base\>](http://w3schools.com/tags/tag_base.asp) tag.
+
+
+###  Please be aware of module loading order
+
+Kohanut uses auth models so the correct order should be the following:
+
+ * kohanut
+ * jelly-auth
+ * auth
