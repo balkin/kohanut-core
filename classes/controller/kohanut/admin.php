@@ -167,7 +167,8 @@ class Controller_Kohanut_Admin extends Controller {
 		{
 			$this->request->redirect('admin/pages');
 		}
-		
+
+		$username = $errors = NULL;
 		// Overide default view and bind with $user and $errors
 		$this->view = View::factory('kohanut/login')
 			->bind('username', $username)
@@ -179,7 +180,7 @@ class Controller_Kohanut_Admin extends Controller {
         {
             $username = $_POST['username'];
             $password = $_POST['password'];
- 
+
             //$remember = isset($_POST['remember']) ? TRUE : FALSE;
             if ($this->auth->login($username, $password, FALSE))
             {
