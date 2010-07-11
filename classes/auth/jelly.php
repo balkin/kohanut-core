@@ -1,10 +1,11 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
 /**
- *  Auth Jelly driver.
+ *  Auth Jelly driver. Modified for Kohanut CMS
  *
  * @package    Jelly Auth
  * @author     Israel Canasa
+ * @author     Alexander Kupreyeu (Kupreev)
  */
 class Auth_Jelly extends Auth {
 
@@ -18,26 +19,26 @@ class Auth_Jelly extends Auth {
 	public function logged_in($role = NULL)
 	{
 		$status = FALSE;
-
+                        
 		// Get the user from the session
-		$user = $this->_session->get($this->_config['session_key']);
-
-		if ( ! is_object($user))
+		$user = $this->session->get($this->config['session_key']);
+        
+        if ( ! is_object($user))
 		{
 			// Attempt auto login
 			if ($this->auto_login())
 			{
 				// Success, get the user back out of the session
-				$user = $this->_session->get($this->_config['session_key']);
+				$user = $this->session->get($this->config['session_key']);
 			}
 		}
 
-		if (is_object($user) AND $user instanceof Model_User AND $user->loaded())
+        if (is_object($user) AND $user instanceof Model_Kohanut_User AND $user->loaded())
 		{
 			// Everything is okay so far
 			$status = TRUE;
-
-			if ( ! empty($role))
+            
+            if ( ! empty($role))
 			{
 				// If role is an array
 				if (is_array($role))
@@ -60,7 +61,7 @@ class Auth_Jelly extends Auth {
 					$status = $user->has_role($role);
 				}
 			}
-		}
+        }
 
 		return $status;
 	}
@@ -73,7 +74,7 @@ class Auth_Jelly extends Auth {
 	 * @param   boolean  enable auto-login
 	 * @return  boolean
 	 */
-	protected function _login($user, $password, $remember)
+	public function _login($user, $password, $remember)
 	{
 		// Make sure we have a user object
 		$user = $this->_get_object($user);
@@ -88,12 +89,12 @@ class Auth_Jelly extends Auth {
 
 				// Set token data
 				$token->user = $user->id;
-				$token->expires = time() + $this->_config['lifetime'];
+				$token->expires = time() + $this->config['lifetime'];
 
 				$token->create();
 
 				// Set the autologin Cookie
-				Cookie::set('authautologin', $token->token, $this->_config['lifetime']);
+				Cookie::set('authautologin', $token->token, $this->config['lifetime']);
 			}
 
 			// Finish the login
@@ -219,11 +220,36 @@ class Auth_Jelly extends Auth {
 
 		// Set the last login date
 		$user->last_login = time();
-
-		// Save the user
+        
+        // Save the user
 		$user->save();
 
 		return parent::complete_login($user);
+	}
+
+	/**
+	 * Convert a unique identifier string to a user object
+	 * 
+	 * @param mixed $user
+	 * @return Model_Kohanut_User
+	 */
+	protected function _get_object($user)
+	{
+		static $current;
+		
+		//make sure the user is loaded only once.
+		if ( ! is_object($current) AND is_string($user))
+		{
+			// Load the user
+			$current = Jelly::select('kohanut_user')->where('username', '=', $user)->load();
+		}
+
+		if ($user instanceof Model_Kohanut_User AND $user->loaded()) 
+		{
+			$current = $user;
+		}
+
+		return $current;
 	}
 
 	/**
@@ -246,30 +272,4 @@ class Auth_Jelly extends Auth {
 
 		return $hash == $user->password;
 	}
-
-	/**
-	 * Convert a unique identifier string to a user object
-	 * 
-	 * @param mixed $user
-	 * @return Model_User
-	 */
-	protected function _get_object($user)
-	{
-		static $current;
-		
-		//make sure the user is loaded only once.
-		if ( ! is_object($current) AND is_string($user))
-		{
-			// Load the user
-			$current = Jelly::select('user')->where('username', '=', $user)->load();
-		}
-
-		if ($user instanceof Model_User AND $user->loaded()) 
-		{
-			$current = $user;
-		}
-
-		return $current;
-	}
-
 } // End Auth_Jelly_Driver
