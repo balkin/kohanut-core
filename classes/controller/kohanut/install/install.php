@@ -36,20 +36,27 @@ class Controller_Kohanut_Install_Install extends Controller {
 		}
 
 		// Everything looks good, lets do it:
+		$warnings = array();
 
 		// Create the tables
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_layouts` (
-				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-				`name` varchar(50) NOT NULL,
-				`desc` varchar(256) DEFAULT NULL,
-				`code` text,
-				PRIMARY KEY (`id`),
-				UNIQUE KEY `name` (`name`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		try {
+			DB::query(NULL, "
+				CREATE TABLE IF NOT EXISTS `kohanut_layouts` (
+					`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+					`name` varchar(50) NOT NULL,
+					`desc` varchar(256) DEFAULT NULL,
+					`code` text,
+					PRIMARY KEY (`id`),
+					UNIQUE KEY `name` (`name`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_pages` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_pages` (
 				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 				`url` varchar(256) DEFAULT NULL,
 				`name` varchar(128) NOT NULL,
@@ -68,48 +75,73 @@ class Controller_Kohanut_Install_Install extends Controller {
 				KEY `Page-Layout` (`layout`),
 				CONSTRAINT `Page-Layout` FOREIGN KEY (`layout`) REFERENCES `kohanut_layouts` (`id`) ON UPDATE NO ACTION
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_redirects` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_redirects` (
 				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 				`url` varchar(255) NOT NULL,
 				`newurl` varchar(255) NOT NULL,
 				`type` enum('301','302') NOT NULL DEFAULT '302',
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-        DB::query(NULL,"
-            CREATE TABLE `kohanut_roles` (
-            `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-            `name` varchar(32) NOT NULL,
-            `description` varchar(255) NOT NULL,
-            PRIMARY KEY  (`id`),
-            UNIQUE KEY `uniq_name` (`name`)
-            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_roles` (
+			`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+			`name` varchar(32) NOT NULL,
+			`description` varchar(255) NOT NULL,
+			PRIMARY KEY  (`id`),
+			UNIQUE KEY `uniq_name` (`name`)
+			) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-        DB::query(NULL,"
-            CREATE TABLE IF NOT EXISTS `kohanut_users` (
-            `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-            `email` varchar(127) NOT NULL,
-            `username` varchar(32) NOT NULL DEFAULT '',
-            `password` char(50) NOT NULL,
-            `logins` int(10) UNSIGNED NOT NULL DEFAULT '0',
-            `last_login` int(10) UNSIGNED,
-            PRIMARY KEY  (`id`),
-            UNIQUE KEY `uniq_username` (`username`),
-            UNIQUE KEY `uniq_email` (`email`)
-            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_users` (
+			`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+			`email` varchar(127) NOT NULL,
+			`username` varchar(32) NOT NULL DEFAULT '',
+			`password` char(50) NOT NULL,
+			`logins` int(10) UNSIGNED NOT NULL DEFAULT '0',
+			`last_login` int(10) UNSIGNED,
+			PRIMARY KEY  (`id`),
+			UNIQUE KEY `uniq_username` (`username`),
+			UNIQUE KEY `uniq_email` (`email`)
+			) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-        DB::query(NULL,"
-            CREATE TABLE IF NOT EXISTS `kohanut_roles_users` (
-            `user_id` int(11) UNSIGNED NOT NULL,
-            `role_id` int(11) UNSIGNED NOT NULL,
-            PRIMARY KEY  (`user_id`,`role_id`),
-            KEY `fk_role_id` (`role_id`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_roles_users` (
+			`user_id` int(11) UNSIGNED NOT NULL,
+			`role_id` int(11) UNSIGNED NOT NULL,
+			PRIMARY KEY  (`user_id`,`role_id`),
+			KEY `fk_role_id` (`role_id`)
+		  ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_blocks` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_blocks` (
 				`id` int(11) NOT NULL AUTO_INCREMENT,
 				`page` int(11) NOT NULL,
 				`area` int(11) NOT NULL,
@@ -118,18 +150,28 @@ class Controller_Kohanut_Install_Install extends Controller {
 				`element` int(11) NOT NULL,
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_element_content` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_element_content` (
 				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 				`code` text NOT NULL,
 				`markdown` int(1) unsigned NOT NULL DEFAULT '1',
 				`twig` int(1) unsigned NOT NULL DEFAULT '1',
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_element_snippet` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_element_snippet` (
 				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 				`code` text NOT NULL,
 				`name` varchar(127) NOT NULL,
@@ -137,24 +179,38 @@ class Controller_Kohanut_Install_Install extends Controller {
 				`twig` tinyint(1) unsigned NOT NULL DEFAULT '1',
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_element_request` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_element_request` (
 				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 				`url` text NOT NULL,
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
-		DB::query(NULL,"
-			CREATE TABLE `kohanut_elementtypes` (
+		try {
+			DB::query(NULL, "
+			CREATE TABLE IF NOT EXISTS `kohanut_elementtypes` (
 				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 				`name` varchar(127) NOT NULL,
 				PRIMARY KEY (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
+		}
+		catch (Database_Exception $ex) {
+			$warnings[] = $ex;
+		}
 
 		// Create sample layouts, pages, and content
 
-		$queries = explode(";\n",trim("
+		$queries = explode(";\n", trim("
 
 			INSERT INTO `kohanut_blocks` (`id`, `page`, `area`, `order`, `elementtype`, `element`) VALUES
 				(1, 1, 1, 3, 1, 1),
@@ -228,26 +284,30 @@ class Controller_Kohanut_Install_Install extends Controller {
 
 		foreach ($queries as $query)
 		{
-			DB::query(NULL,$query)->execute();
+			try {
+				DB::query(NULL, $query)->execute();
+			}
+			catch (Database_Exception $ex) {
+				$warnings[] = $ex;
+			}
 		}
 
+		try {
+			// Create the admin user
+			$admin = Jelly::factory('kohanut_user')
+					->set(array(
+				'username' => 'admin',
+				'password' => $_POST['password'],
+				'password_confirm' => $_POST['password'],
+				'email' => 'admin@example.com',
+				'roles' => array(1), // login
+			))->save();
+		} catch (Validate_Exception $e) {
+			echo Kohana::debug($e->array->errors());
+			$warnings[] = $e;
+		}
 
-        try {
-        	// Create the admin user
-		    $admin = Jelly::factory('kohanut_user')
-		        ->set(array(
-				    'username'=>'admin',
-				    'password'=>$_POST['password'],
-				    'password_confirm'=>$_POST['password'],
-				    'email' => 'admin@example.com',
-				    'roles' => array(1), // login
-		        ))->save();
-        } catch (Validate_Exception $e) {
-        	echo Kohana::debug($e->array->errors());
-        }
-
-
-		$this->request->response = new View('kohanut/install-success');
+		$this->request->response = new View('kohanut/install-success', array('warnings' => $warnings));
 		return;
 
 	}

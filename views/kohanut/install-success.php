@@ -24,6 +24,16 @@
 		</div>
 			
     </div>
-    
+
+<?php
+	/** @var Exception[] $warnings */
+	if (count($warnings)) {
+		echo '<p>' , __('There were several SQL errors during installation:</p><ul>');
+		foreach ($warnings as $ex) {
+			echo '<li>', $ex->getMessage(), '</li>';
+		}
+		echo "</ul>";
+	}
+?>
 </body>
 </html>
