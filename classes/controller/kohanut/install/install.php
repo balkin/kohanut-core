@@ -71,7 +71,7 @@ class Controller_Kohanut_Install_Install extends Controller {
 				`rgt` int(10) unsigned DEFAULT NULL,
 				`lvl` int(10) unsigned DEFAULT NULL,
 				`scp` int(10) unsigned DEFAULT NULL,
-				`edited` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				`edited` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 				PRIMARY KEY (`id`),
 				KEY `Page-Layout` (`layout`),
 				CONSTRAINT `Page-Layout` FOREIGN KEY (`layout`) REFERENCES `kohanut_layouts` (`id`) ON UPDATE NO ACTION
