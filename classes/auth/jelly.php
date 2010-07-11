@@ -21,7 +21,7 @@ class Auth_Jelly extends Auth {
 		$status = FALSE;
                         
 		// Get the user from the session
-		$user = $this->session->get($this->config['session_key']);
+		$user = $this->_session->get($this->_config['session_key']);
         
         if ( ! is_object($user))
 		{
@@ -29,7 +29,7 @@ class Auth_Jelly extends Auth {
 			if ($this->auto_login())
 			{
 				// Success, get the user back out of the session
-				$user = $this->session->get($this->config['session_key']);
+				$user = $this->_session->get($this->_config['session_key']);
 			}
 		}
 
@@ -89,12 +89,12 @@ class Auth_Jelly extends Auth {
 
 				// Set token data
 				$token->user = $user->id;
-				$token->expires = time() + $this->config['lifetime'];
+				$token->expires = time() + $this->_config['lifetime'];
 
 				$token->create();
 
 				// Set the autologin Cookie
-				Cookie::set('authautologin', $token->token, $this->config['lifetime']);
+				Cookie::set('authautologin', $token->token, $this->_config['lifetime']);
 			}
 
 			// Finish the login
