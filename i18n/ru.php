@@ -213,4 +213,11 @@ return array
 	'Could not find layout with ID :id.' => 'Не найден макет с ID :id.',
 	'Delete failed! This is most likely caused because this template is still being used by one or more pages.' => 'Удалить не получилось! Наиболее вероятная причина: этот шаблон все еще используется на одной или нескольких страницах.',
 	'Could not find page with ID :id.' => 'Страница с ID :id не найдена.',
+
+	// Website elements
+	'Contact Us' => 'Форма для связи',
+	'Name:' => 'Имя:',
+	'Email:' => 'Почта:',
+	'Comments:' => 'Комментарий:',
+	'Send Comments' => 'Отправить',
 );
