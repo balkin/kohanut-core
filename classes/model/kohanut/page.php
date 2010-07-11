@@ -26,6 +26,8 @@ class Model_Kohanut_Page extends Jelly_Model_MPTT {
 			    )),
 			'name' => new Field_String,
 			
+			'edited' => new Field_Timestamp,
+			
 			//layout
 			'layout'  => new Field_BelongsTo(array(
 				'model' => 'kohanut_layout',

@@ -98,6 +98,7 @@ class Controller_Kohanut extends Controller
 			
 			// Set the status to 200, rather than 404, which was set by the router with the reflectionexception
 			Kohanut::status(200);
+			header('Last-Modified: ' . date(DateTime::RFC2822, $page->edited));
 
             $out = $page->render();
         }
@@ -164,10 +165,12 @@ class Controller_Kohanut extends Controller
 			 * @todo maybe have a sitemap flag in the database? could exclude error pages etc. then?
 			 * @todo check for HTTPS etc.. it's a tad hacked 
 			 */
+			$lastmod = date(DateTime::W3C, $page->edited);
 			$response .= '<url>' . PHP_EOL;
 			$response .= ' <loc>';
 			$response .= 'http://' . $_SERVER['HTTP_HOST'] . '/' . $page->url;
 			$response .= '</loc>' . PHP_EOL;
+			$response .= ' <lastmod>' .   $lastmod . '</lastmod>' . PHP_EOL;
 			$response .= '</url>' . PHP_EOL;
 		}
 		$response .= "</urlset>";
