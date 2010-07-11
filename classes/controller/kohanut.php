@@ -151,10 +151,7 @@ class Controller_Kohanut extends Controller
 	public function action_sitemap()
 	{
 		// build query for everything that's not a link (external links all [should] have :// in them)
-		$query = DB::select()->where('URL', 'NOT LIKE', '%://%')->group_by('url');
-		
-		// load all pages
-		$pages =  Sprig::factory('kohanut_page')->load($query, FALSE);
+		$pages = Jelly::select('kohanut_page', NULL)->where('URL', 'NOT LIKE', '%://%')->execute();
 	
 		// set response variable with initial sitemap data.
 		$response  = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -162,16 +159,16 @@ class Controller_Kohanut extends Controller
 		
 		// iterate through each page and add to sitemap
 		foreach($pages as $page)
-		{	
+		{
 			/**
 			 * @todo maybe have a sitemap flag in the database? could exclude error pages etc. then?
 			 * @todo check for HTTPS etc.. it's a tad hacked 
 			 */
-			$response .= '<url>';
-			$response .= '<loc>';
+			$response .= '<url>' . PHP_EOL;
+			$response .= ' <loc>';
 			$response .= 'http://' . $_SERVER['HTTP_HOST'] . '/' . $page->url;
-			$response .= '</loc>';
-			$response .= '</url>';
+			$response .= '</loc>' . PHP_EOL;
+			$response .= '</url>' . PHP_EOL;
 		}
 		$response .= "</urlset>";
 		
