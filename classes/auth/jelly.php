@@ -21,7 +21,7 @@ class Auth_Jelly extends Auth {
 		$status = FALSE;
                         
 		// Get the user from the session
-		$user = $this->session->get($this->config['session_key']);
+		$user = $this->_session->get($this->_config['session_key']);
         
         if ( ! is_object($user))
 		{
@@ -29,7 +29,7 @@ class Auth_Jelly extends Auth {
 			if ($this->auto_login())
 			{
 				// Success, get the user back out of the session
-				$user = $this->session->get($this->config['session_key']);
+				$user = $this->_session->get($this->_config['session_key']);
 			}
 		}
 
@@ -89,12 +89,12 @@ class Auth_Jelly extends Auth {
 
 				// Set token data
 				$token->user = $user->id;
-				$token->expires = time() + $this->config['lifetime'];
+				$token->expires = time() + $this->_config['lifetime'];
 
 				$token->create();
 
 				// Set the autologin Cookie
-				Cookie::set('authautologin', $token->token, $this->config['lifetime']);
+				Cookie::set('authautologin', $token->token, $this->_config['lifetime']);
 			}
 
 			// Finish the login
@@ -228,6 +228,27 @@ class Auth_Jelly extends Auth {
 	}
 
 	/**
+	 * Compare password with original (hashed). Works for current (logged in) user
+	 *
+	 * @param   string  $password
+	 * @return  boolean
+	 */
+	public function check_password($password)
+	{
+		$user = $this->get_user();
+
+		if ($user === FALSE)
+		{
+			// nothing to compare
+			return FALSE;
+		}
+
+		$hash = $this->hash_password($password, $this->find_salt($user->password));
+
+		return $hash == $user->password;
+	}
+
+	/**	 
 	 * Convert a unique identifier string to a user object
 	 * 
 	 * @param mixed $user
@@ -241,7 +262,7 @@ class Auth_Jelly extends Auth {
 		if ( ! is_object($current) AND is_string($user))
 		{
 			// Load the user
-			$current = Jelly::select('kohanut_user')->where('username', '=', $user)->load();
+			$current = Jelly::select('kohanut_user')->where('username', '=', $user)->limit(1)->execute();
 		}
 
 		if ($user instanceof Model_Kohanut_User AND $user->loaded()) 
