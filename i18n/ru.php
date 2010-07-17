@@ -7,7 +7,7 @@
  *
  * I do not speak spanish. Don't get mad at me if this is nonsense :)
  * 
- * @author     Google Translate, Michael Peters
+ * @author     Ruslan Balkin
  * @version    0.6.1
  */
 return array
@@ -76,8 +76,8 @@ return array
 	'Add New Element' => 'Добавить новый элемент',
 	'Add Element' => 'Добавить элемент',
 	'Edit' => 'Редактировать',
-	'Move Up' => 'Поднять', // TODO проверить
-	'Move Down' => 'Опустить', // TODO проверить
+	'Move Up' => 'Поднять',
+	'Move Down' => 'Опустить',
 	'Delete' => 'Удалить',
 	// Add Page / Edit Meta Data
 	'Adding New Page' => 'Добавление новой страницы',
@@ -163,7 +163,7 @@ return array
 	// Users
 	'Users' => 'Пользователи',
 	'No users found' => 'Нету пользователей',
-	'Create a New User' => 'Создать пользователя',
+	'Create a New User' => 'Создать нового пользователя',
 	'Edit User' => 'Редактировать пользователя',
 	'Create User' => 'Создание пользователя',
 	'User Name' => 'Имя пользователя',
@@ -213,7 +213,6 @@ return array
 	'Could not find layout with ID :id.' => 'Не найден макет с ID :id.',
 	'Delete failed! This is most likely caused because this template is still being used by one or more pages.' => 'Удалить не получилось! Наиболее вероятная причина: этот шаблон все еще используется на одной или нескольких страницах.',
 	'Could not find page with ID :id.' => 'Страница с ID :id не найдена.',
-
 	// Website elements
 	'Contact Us' => 'Форма для связи',
 	'Name:' => 'Имя:',

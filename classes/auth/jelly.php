@@ -228,6 +228,27 @@ class Auth_Jelly extends Auth {
 	}
 
 	/**
+	 * Compare password with original (hashed). Works for current (logged in) user
+	 *
+	 * @param   string  $password
+	 * @return  boolean
+	 */
+	public function check_password($password)
+	{
+		$user = $this->get_user();
+
+		if ($user === FALSE)
+		{
+			// nothing to compare
+			return FALSE;
+		}
+
+		$hash = $this->hash_password($password, $this->find_salt($user->password));
+
+		return $hash == $user->password;
+	}
+
+	/**	 
 	 * Convert a unique identifier string to a user object
 	 * 
 	 * @param mixed $user
@@ -241,7 +262,7 @@ class Auth_Jelly extends Auth {
 		if ( ! is_object($current) AND is_string($user))
 		{
 			// Load the user
-			$current = Jelly::select('kohanut_user')->where('username', '=', $user)->load();
+			$current = Jelly::select('kohanut_user')->where('username', '=', $user)->limit(1)->execute();
 		}
 
 		if ($user instanceof Model_Kohanut_User AND $user->loaded()) 
