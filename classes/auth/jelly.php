@@ -272,25 +272,4 @@ class Auth_Jelly extends Auth {
 
 		return $current;
 	}
-
-	/**
-	 * Compare password with original (hashed). Works for current (logged in) user
-	 *
-	 * @param   string  $password
-	 * @return  boolean
-	 */
-	public function check_password($password)
-	{
-		$user = $this->get_user();
-
-		if ($user === FALSE)
-		{
-			// nothing to compare
-			return FALSE;
-		}
-
-		$hash = $this->hash_password($password, $this->find_salt($user->password));
-
-		return $hash == $user->password;
-	}
 } // End Auth_Jelly_Driver
