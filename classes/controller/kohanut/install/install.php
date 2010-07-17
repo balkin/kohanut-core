@@ -71,9 +71,11 @@ class Controller_Kohanut_Install_Install extends Controller {
 				`rgt` int(10) unsigned DEFAULT NULL,
 				`lvl` int(10) unsigned DEFAULT NULL,
 				`scp` int(10) unsigned DEFAULT NULL,
+				`created` TIMESTAMP NOT NULL DEFAULT '0000-00-00',
 				`edited` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 				PRIMARY KEY (`id`),
 				KEY `Page-Layout` (`layout`),
+				KEY `Page-Created` (`created`),
 				CONSTRAINT `Page-Layout` FOREIGN KEY (`layout`) REFERENCES `kohanut_layouts` (`id`) ON UPDATE NO ACTION
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;")->execute();
 		}
@@ -310,6 +312,5 @@ class Controller_Kohanut_Install_Install extends Controller {
 
 		$this->request->response = new View('kohanut/install-success', array('warnings' => $warnings));
 		return;
-
 	}
 }
