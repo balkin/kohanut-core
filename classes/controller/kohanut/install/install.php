@@ -272,6 +272,8 @@ class Controller_Kohanut_Install_Install extends Controller {
 				(23, 'samples/override', 'Override', 2, 1, 1, 1, '', '', '', 9, 10, 2, 1),
 				(24, 'samples/basic', 'Basic', 2, 0, 1, 1, 'Sample - Basic', '', '', 5, 6, 2, 1);
 
+			UPDATE `kohanut_pages` SET created = CURRENT_TIMESTAMP;
+
 			INSERT INTO `kohanut_redirects` (`id`, `url`, `newurl`, `type`) VALUES
 				(1, 'test', 'about', '301');
 
